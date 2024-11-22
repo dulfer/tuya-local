@@ -1,4 +1,7 @@
 name: Gosund SP211 Dual Socket Smart Plug
+products:
+  - id: p2tjkvgdhvuadnlj
+    name: Gosund Dual Socket Smart Plug
 primary_entity:
   entity: switch
   class: outlet
