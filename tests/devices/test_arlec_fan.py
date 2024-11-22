@@ -29,10 +29,10 @@ class TestArlecFan(SwitchableTests, BasicSelectTests, TuyaDeviceTestCase):
             TIMER_DPS,
             self.entities["select_timer"],
             {
-                "off": "Off",
-                "2hour": "2 hours",
-                "4hour": "4 hours",
-                "8hour": "8 hours",
+                "off": "cancel",
+                "2hour": "2h",
+                "4hour": "4h",
+                "8hour": "8h",
             },
         )
         self.mark_secondary(["select_timer"])
@@ -44,6 +44,8 @@ class TestArlecFan(SwitchableTests, BasicSelectTests, TuyaDeviceTestCase):
                 FanEntityFeature.DIRECTION
                 | FanEntityFeature.PRESET_MODE
                 | FanEntityFeature.SET_SPEED
+                | FanEntityFeature.TURN_OFF
+                | FanEntityFeature.TURN_ON
             ),
         )
 
@@ -118,7 +120,3 @@ class TestArlecFan(SwitchableTests, BasicSelectTests, TuyaDeviceTestCase):
         self.dps[PRESET_DPS] = "normal"
         async with assert_device_properties_set(self.subject._device, {SPEED_DPS: 5}):
             await self.subject.async_set_percentage(80)
-
-    def test_extra_state_attributes(self):
-        self.dps[TIMER_DPS] = "2hour"
-        self.assertEqual(self.subject.extra_state_attributes, {"timer": "2hour"})

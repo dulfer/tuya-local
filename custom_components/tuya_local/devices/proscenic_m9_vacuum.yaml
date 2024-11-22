@@ -1,8 +1,7 @@
-name: M9 Robot Vacuum
+name: Robot Vacuum
 products:
   - id: ise3eub6pvacnzdw
     name: Proscenic M9
-    # information about dpids https://developer.tuya.com/en/docs/iot/laser-sweep-robot-template?id=Kae3e76wphrun
 primary_entity:
   entity: vacuum
   dps:
@@ -136,14 +135,10 @@ primary_entity:
       type: string
       optional: true
     - id: 25
-      name: do_not_disturb # cannot be used, set an automation to mute sound instead
+      name: do_not_disturb  # cannot be used, set an automation instead
       type: boolean
-      hidden: true
-    - id: 28
-      name: error # seems to only switch between 0 and 2 when fault, dp 198 and 199 is where the messages are
-      type: integer
     - id: 32
-      name: device_timer # cannot be used, set an automation for scheduled cleaning
+      name: device_timer  # set an automation for scheduled cleaning
       type: string
       optional: true
     - id: 33
@@ -179,7 +174,7 @@ primary_entity:
       type: string
       optional: true
     - id: 137
-      name: cloud_map # moved here since it's not useful without the app
+      name: cloud_map  # not useful without the app
       type: boolean
     - id: 141
       name: cleanspot
@@ -191,7 +186,6 @@ secondary_entities:
     name: Cleaning time
     category: diagnostic
     class: duration
-    icon: "mdi:timer-star"
     dps:
       - id: 6
         name: sensor
@@ -221,8 +215,7 @@ secondary_entities:
         unit: "%"
         class: measurement
   - entity: select
-    name: Water setting
-    icon: "mdi:water"
+    translation_key: mopping
     dps:
       - id: 10
         name: option
@@ -233,17 +226,17 @@ secondary_entities:
               - dps_val: installed
                 mapping:
                   - dps_val: closed
-                    value: "Off"
+                    value: "off"
                   - dps_val: low
-                    value: Low
+                    value: low
                   - dps_val: middle
-                    value: Middle
+                    value: medium
                   - dps_val: high
-                    value: High
+                    value: high
               - dps_val: none
                 mapping:
                   - dps_val: closed
-                    value: "Off"
+                    value: "off"
       - id: 40
         name: mopstate
         type: string
@@ -251,7 +244,6 @@ secondary_entities:
     name: Side brush life
     category: diagnostic
     class: duration
-    icon: "mdi:timer-sand"
     dps:
       - id: 17
         name: sensor
@@ -263,7 +255,7 @@ secondary_entities:
   - entity: button
     name: Side brush reset
     category: diagnostic
-    icon: "mdi:autorenew"
+    class: restart
     dps:
       - id: 18
         type: boolean
@@ -273,7 +265,6 @@ secondary_entities:
     name: Main brush life
     category: diagnostic
     class: duration
-    icon: "mdi:timer-sand"
     dps:
       - id: 19
         name: sensor
@@ -285,7 +276,7 @@ secondary_entities:
   - entity: button
     name: Main brush reset
     category: diagnostic
-    icon: "mdi:autorenew"
+    class: restart
     dps:
       - id: 20
         type: boolean
@@ -295,7 +286,6 @@ secondary_entities:
     name: Filter life
     category: diagnostic
     class: duration
-    icon: "mdi:timer-sand"
     dps:
       - id: 21
         name: sensor
@@ -305,9 +295,8 @@ secondary_entities:
           min: 0
           max: 9000
   - entity: button
-    name: Filter reset
+    translation_key: filter_reset
     category: diagnostic
-    icon: "mdi:autorenew"
     dps:
       - id: 22
         type: boolean
@@ -317,7 +306,6 @@ secondary_entities:
     name: Mop life
     category: diagnostic
     class: duration
-    icon: "mdi:timer-sand"
     dps:
       - id: 23
         name: sensor
@@ -329,7 +317,7 @@ secondary_entities:
   - entity: button
     name: Mop reset
     category: diagnostic
-    icon: "mdi:autorenew"
+    class: restart
     dps:
       - id: 24
         type: boolean
@@ -394,8 +382,7 @@ secondary_entities:
           - scale: 1
             step: 1
   # - entity: select
-  #   name: Language
-  #   icon: "mdi:mouth"
+  #   translation_key: language
   #   dps:
   #     - id: 36
   #       name: option
@@ -403,7 +390,7 @@ secondary_entities:
   #       optional: true
   #       mapping:
   #         - dps_val: chinese_simplified
-  #           value: chinese_simplified
+  #           value: chinese
   #         - dps_val: chinese_traditional
   #           value: chinese_traditional
   #         - dps_val: english
@@ -460,7 +447,7 @@ secondary_entities:
     category: config
     dps:
       - id: 39
-        name: switch # required so the mop and suction options work
+        name: switch  # required so the mop and suction options work
         type: boolean
   - entity: binary_sensor
     name: Mop installed
@@ -478,7 +465,6 @@ secondary_entities:
   - entity: select
     name: Working mode
     icon: "mdi:vacuum"
-    optional: true
     dps:
       - id: 41
         name: option
@@ -532,7 +518,7 @@ secondary_entities:
   - entity: button
     name: Sensor reset
     category: diagnostic
-    icon: "mdi:autorenew"
+    class: restart
     dps:
       - id: 140
         type: boolean
@@ -540,39 +526,79 @@ secondary_entities:
         optional: true
   - entity: sensor
     name: Event message
+    class: enum
     category: diagnostic
     icon: "mdi:eye-circle-outline"
     dps:
       - id: 198
         name: sensor
         type: integer
-        # 20001 - Start auto clean
-        # 20002 - Start mopping
-        # 20003 - Start room clean
-        # 20004 - Start area clean
-        # 20005 - Start spot clean
-        # 20006 - Start partial clean
-        # 20008 - Relocating
-        # 20019 - Job finished
-        # 20020 - Low power, return to charge
-        # 20021 - Charging
-        # 20022 - Battery low
-        # 20024 - Emptying dustbin
-        # 20025 - Dustbin empty completed
-  - entity: sensor
-    name: Error message
+        mapping:
+          - dps_val: 20001
+            value: Start auto clean
+          - dps_val: 20002
+            value: Start mopping
+          - dps_val: 20003
+            value: Start room clean
+          - dps_val: 20004
+            value: Start area clean
+          - dps_val: 20005
+            value: Start spot clean
+          - dps_val: 20006
+            value: Start partial clean
+          - dps_val: 20008
+            value: Relocating
+          - dps_val: 20019
+            value: Job finished
+          - dps_val: 20020
+            value: Low power, return to charge
+          - dps_val: 20021
+            value: Charging
+          - dps_val: 20022
+            value: Battery low
+          - dps_val: 20024
+            value: Emptying dustbin
+          - dps_val: 20025
+            value: Dustbin empty completed
+          - value: unknown
+      - id: 198
+        name: event_code
+        type: integer
+  - entity: binary_sensor
+    class: problem
     category: diagnostic
-    icon: "mdi:eye-circle-outline"
     dps:
       - id: 199
         name: sensor
         type: integer
-        # 21003 - Dustbin not installed
-        # 21004
-        # 21005 - Mopping cloth not installed
-        # 21008 - Vacuum not on floor
-        # 21012 - Dust bag full
-        # 21013 - Dust bag not installed
-        # 22001 - Check anti-collision sensor
-        # 22006 - Jammed or stuck
-        # 23011 - Dust collection error due to insufficient pressure
+        mapping:
+          - dps_val: 0
+            value: false
+          - value: true
+      - id: 199
+        name: fault_code
+        type: integer
+      - id: 28
+        name: error_flag
+        type: bitfield
+      - id: 199
+        name: description
+        type: integer
+        mapping:
+          - dps_val: 21003
+            value: Dustbin not installed
+          - dps_val: 21005
+            value: Mopping cloth not fitted
+          - dps_val: 21008
+            value: Vacuum not on floor
+          - dps_val: 21012
+            value: Dust bag full
+          - dps_val: 21013
+            value: Dust bag not installed
+          - dps_val: 22001
+            value: Check anti-collision sensor
+          - dps_val: 22006
+            value: Jammed or stuck
+          - dps_val: 23011
+            value: Dust collection error due to insufficient pressure
+          - value: unknown

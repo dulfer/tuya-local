@@ -35,16 +35,16 @@ class TestHydrothermDynamicX8(
         self.subject = self.entities.get("water_heater")
         self.setUpBasicBinarySensor(
             ERROR_DP,
-            self.entities.get("binary_sensor_fault"),
+            self.entities.get("binary_sensor_problem"),
             device_class=BinarySensorDeviceClass.PROBLEM,
             testdata=(1, 0),
         )
-        self.mark_secondary(["binary_sensor_fault"])
+        self.mark_secondary(["binary_sensor_problem"])
 
     def test_supported_features(self):
         self.assertEqual(
             self.subject.supported_features,
-            WaterHeaterEntityFeature.OPERATION_MODE,
+            WaterHeaterEntityFeature.OPERATION_MODE | WaterHeaterEntityFeature.ON_OFF,
         )
 
     def test_temperature_unit_returns_celsius(self):
@@ -58,10 +58,10 @@ class TestHydrothermDynamicX8(
         self.assertEqual(self.subject.current_temperature, 55)
 
     def test_min_temp(self):
-        self.assertEqual(self.subject.min_temp, 15)
+        self.assertEqual(self.subject.min_temp, 15.0)
 
     def test_max_temp(self):
-        self.assertEqual(self.subject.max_temp, 75)
+        self.assertEqual(self.subject.max_temp, 75.0)
 
     def test_target_temperature(self):
         self.dps[TEMPERATURE_DP] = 61
@@ -175,3 +175,10 @@ class TestHydrothermDynamicX8(
     async def test_turn_away_mode_off_fails(self):
         with self.assertRaises(NotImplementedError):
             await self.subject.async_turn_away_mode_off()
+
+    def test_basic_bsensor_extra_state_attributes(self):
+        self.dps[ERROR_DP] = 2
+        self.assertDictEqual(
+            self.basicBSensor.extra_state_attributes,
+            {"fault_code": 2},
+        )

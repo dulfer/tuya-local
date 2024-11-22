@@ -2,6 +2,8 @@ name: Relay switch
 products:
   - id: 1aegphq4yfd50e6b
     name: 1-433
+  - id: fugkn1vkc53nvo1s
+    name: 1 Gang WiFi Smart Relay
 primary_entity:
   entity: switch
   dps:
@@ -24,9 +26,8 @@ primary_entity:
       optional: true
 secondary_entities:
   - entity: number
-    name: Timer
+    translation_key: timer
     category: config
-    icon: "mdi:timer"
     dps:
       - id: 9
         type: integer
@@ -39,8 +40,7 @@ secondary_entities:
           - scale: 60
             step: 60
   - entity: select
-    name: Power on state
-    icon: "mdi:toggle-switch"
+    translation_key: initial_state
     category: config
     dps:
       - id: 38
@@ -48,11 +48,11 @@ secondary_entities:
         name: option
         mapping:
           - dps_val: "off"
-            value: "Off"
+            value: "off"
           - dps_val: "on"
-            value: "On"
-          - dps_val: "memory"
-            value: Last state
+            value: "on"
+          - dps_val: memory
+            value: memory
   - entity: select
     name: Switch type
     icon: "mdi:toggle-switch"
@@ -98,4 +98,3 @@ secondary_entities:
           max: 3600
         mapping:
           - mask: 00FFFF
-

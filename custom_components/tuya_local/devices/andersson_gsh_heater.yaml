@@ -2,6 +2,7 @@ name: Andersson GSH heater
 legacy_type: gsh_heater
 primary_entity:
   entity: climate
+  translation_only_key: heater
   dps:
     - id: 1
       name: hvac_mode
@@ -9,13 +10,12 @@ primary_entity:
       mapping:
         - dps_val: true
           value: "heat"
-          icon: "mdi:radiator"
         - dps_val: false
           value: "off"
-          icon: "mdi:radiator-disabled"
     - id: 2
       name: temperature
       type: integer
+      unit: C
       range:
         min: 5
         max: 35
@@ -32,9 +32,18 @@ primary_entity:
           value: boost
         - dps_val: af
           value: away
-    - id: 12
-      name: error
-      type: bitfield
-      mapping:
-        - dps_val: 0
-          value: "OK"
+secondary_entities:
+  - entity: binary_sensor
+    class: problem
+    category: diagnostic
+    dps:
+      - id: 12
+        type: bitfield
+        name: sensor
+        mapping:
+          - dps_val: 0
+            value: false
+          - value: true
+      - id: 12
+        type: bitfield
+        name: fault_code

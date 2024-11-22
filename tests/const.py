@@ -878,17 +878,6 @@ WOOX_R4028_SOCKET_PAYLOAD = {
     "105": 0,
 }
 
-ES01_POWERSTRIP_PAYLOAD = {
-    "1": True,
-    "2": True,
-    "3": True,
-    "4": True,
-    "5": 0,
-    "6": 0,
-    "7": 0,
-    "8": 0,
-}
-
 OWON_PCT513_THERMOSTAT_PAYLOAD = {
     "2": "cool",
     "16": 2150,
@@ -1112,7 +1101,7 @@ PARKSIDE_PLGS2012A1_PAYLOAD = {
     "8": False,
     "9": True,
     "10": 5,
-    "11": "unknown",
+    "11": 0,
     "101": 2500,
     "102": 11,
     "103": False,
@@ -1627,4 +1616,55 @@ ZXG30_ALARM_PAYLOAD = {
     "37": "0",
     "39": "0",
     "40": "1",
+}
+
+IR_REMOTE_SENSORS_PAYLOAD = {
+    "101": 200,
+    "102": 80,
+}
+
+LORATAP_CURTAINSWITCH_PAYLOAD = {
+    "1": "3",
+}
+
+BLE_WATERVALVE_PAYLOAD = {
+    "1": True,
+    "4": 0,
+    "7": 50,
+    "9": 3600,
+    "10": "cancel",
+    "12": "unknown",
+    "15": 60,
+}
+
+AM25_ROLLERBLIND_PAYLOAD = {
+    "1": "stop",
+    "2": 0,
+    "104": True,
+    "105": True,
+    "109": 4,
+}
+
+DUUX_BLIZZARD_PAYLOAD = {
+    "1": False,
+    "2": "fan",
+    "3": "high",
+    "4": 0,
+    "6": False,
+    "7": False,
+    "8": 22,
+    "9": 0,
+    "11": 72,
+    "12": True,
+    "13": False,
+    "14": False,
+    "15": 0,
+}
+
+BLE_SMARTPLANT_PAYLOAD = {
+    "3": 50,
+    "5": 25,
+    "9": "c",
+    "14": "Low",
+    "15": 20,
 }

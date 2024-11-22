@@ -21,26 +21,30 @@ primary_entity:
 secondary_entities:
   - entity: switch
     name: Outlet 2
+    class: outlet
     dps:
       - id: 2
         type: boolean
         name: switch
   - entity: switch
     name: Outlet 3
+    class: outlet
     dps:
       - id: 3
         type: boolean
         name: switch
   - entity: switch
     name: Outlet 4
+    class: outlet
     dps:
       - id: 4
         type: boolean
         name: switch
   - entity: number
-    name: Timer 1
     category: config
-    icon: "mdi:timer"
+    translation_key: timer_x
+    translation_placeholders:
+      x: "1"
     dps:
       - id: 9
         type: integer
@@ -53,9 +57,10 @@ secondary_entities:
           - scale: 60
             step: 60
   - entity: number
-    name: Timer 2
     category: config
-    icon: "mdi:timer"
+    translation_key: timer_x
+    translation_placeholders:
+      x: "2"
     dps:
       - id: 10
         type: integer
@@ -68,9 +73,10 @@ secondary_entities:
           - scale: 60
             step: 60
   - entity: number
-    name: Timer 3
     category: config
-    icon: "mdi:timer"
+    translation_key: timer_x
+    translation_placeholders:
+      x: "3"
     dps:
       - id: 11
         type: integer
@@ -83,9 +89,10 @@ secondary_entities:
           - scale: 60
             step: 60
   - entity: number
-    name: Timer 4
     category: config
-    icon: "mdi:timer"
+    translation_key: timer_x
+    translation_placeholders:
+      x: "4"
     dps:
       - id: 12
         type: integer

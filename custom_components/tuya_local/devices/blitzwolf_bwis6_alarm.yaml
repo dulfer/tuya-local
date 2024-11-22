@@ -87,7 +87,6 @@ secondary_entities:
         unit: "%"
         class: measurement
   - entity: binary_sensor
-    name: Low battery
     class: battery
     category: diagnostic
     dps:
@@ -183,19 +182,9 @@ secondary_entities:
         type: string
         name: information
   - entity: button
-    name: Factory reset
-    class: restart
+    translation_key: factory_reset
     category: config
     dps:
       - id: 34
         type: boolean
         name: button
-
-
-
-
-
-
-
-
-

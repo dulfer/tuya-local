@@ -85,11 +85,11 @@ class TestMoesTempHumidity(
                 },
                 {
                     "dps": INIT_DPS,
-                    "name": "select_power_on_state",
+                    "name": "select_initial_state",
                     "options": {
-                        "on": "On",
-                        "off": "Off",
-                        "memory": "Last State",
+                        "on": "on",
+                        "off": "off",
+                        "memory": "memory",
                     },
                 },
             ]
@@ -119,14 +119,14 @@ class TestMoesTempHumidity(
                 "number_minimum_humidity",
                 "number_timer_1",
                 "number_timer_2",
-                "select_power_on_state",
+                "select_initial_state",
                 "number_high_temperature_switch_level",
                 "switch_high_temperature_switch",
                 "number_high_temperature_alarm_level",
                 "number_low_temperature_switch_level",
                 "switch_low_temperature_switch",
                 "number_low_temperature_alarm_level",
-                "binary_sensor_fault",
+                "binary_sensor_problem",
             ]
         )
 
@@ -139,7 +139,6 @@ class TestMoesTempHumidity(
         self.assertDictEqual(
             self.multiSwitch["switch_main_switch"].extra_state_attributes,
             {
-                "fault_code": "OK",
                 "cycle_time": "ABCDEF0123456789",
                 "unknown_106": "unknown106",
             },

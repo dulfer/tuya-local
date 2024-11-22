@@ -1,4 +1,5 @@
 """Tests for the switch entity."""
+
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.switch import SwitchDeviceClass
@@ -31,6 +32,8 @@ CALIBP_DPS = "24"
 CALIBE_DPS = "25"
 ERROR_DPS = "26"
 INITIAL_DPS = "38"
+LIGHT_DPS = "39"
+LOCK_DPS = "40"
 CYCLE_DPS = "41"
 RANDOM_DPS = "42"
 OVERCHARGE_DPS = "46"
@@ -63,7 +66,7 @@ class TestSwitchV2Energy(
         )
         self.setUpBasicBinarySensor(
             ERROR_DPS,
-            self.entities.get("binary_sensor_error"),
+            self.entities.get("binary_sensor_problem"),
             device_class=BinarySensorDeviceClass.PROBLEM,
             testdata=(1, 0),
         )
@@ -78,9 +81,9 @@ class TestSwitchV2Energy(
             INITIAL_DPS,
             self.entities.get("select_initial_state"),
             {
-                "on": "On",
-                "off": "Off",
-                "memory": "Last State",
+                "on": "on",
+                "off": "off",
+                "memory": "memory",
             },
         )
         self.setUpMultiSensors(
@@ -117,9 +120,11 @@ class TestSwitchV2Energy(
         )
         self.mark_secondary(
             [
-                "binary_sensor_error",
+                "binary_sensor_problem",
+                "lock_child_lock",
                 "number_timer",
                 "select_initial_state",
+                "select_light",
                 "sensor_current",
                 "sensor_energy",
                 "sensor_power",
@@ -130,7 +135,6 @@ class TestSwitchV2Energy(
 
     def test_multi_switch_state_attributes(self):
         self.dps[TEST_DPS] = 21
-        self.dps[ERROR_DPS] = 26
         self.dps[CYCLE_DPS] = "1A2B"
         self.dps[RANDOM_DPS] = "3C4D"
 
@@ -138,7 +142,6 @@ class TestSwitchV2Energy(
             self.multiSwitch["switch_outlet"].extra_state_attributes,
             {
                 "test_bit": 21,
-                "fault_code": 26,
                 "cycle_timer": "1A2B",
                 "random_timer": "3C4D",
             },
@@ -165,4 +168,11 @@ class TestSwitchV2Energy(
         self.assertDictEqual(
             self.multiSensor["sensor_voltage"].extra_state_attributes,
             {"calibration": 22},
+        )
+
+    def test_basic_bsensor_extra_state_attributes(self):
+        self.dps[ERROR_DPS] = 2
+        self.assertDictEqual(
+            self.basicBSensor.extra_state_attributes,
+            {"fault_code": 2},
         )

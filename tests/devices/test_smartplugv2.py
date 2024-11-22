@@ -1,4 +1,5 @@
 """Tests for the switch entity."""
+
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.components.switch import SwitchDeviceClass
 from homeassistant.const import (
@@ -66,6 +67,7 @@ class TestSwitchV2(
         )
         self.mark_secondary(
             [
+                "binary_sensor_problem",
                 "number_timer",
                 "sensor_current",
                 "sensor_power",

@@ -1,7 +1,6 @@
-from homeassistant.components.sensor import SensorDeviceClass, STATE_CLASS_MEASUREMENT
+from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, SensorDeviceClass
 from homeassistant.components.vacuum import (
     STATE_CLEANING,
-    STATE_DOCKED,
     STATE_ERROR,
     STATE_IDLE,
     STATE_PAUSED,
@@ -61,23 +60,26 @@ class TestLefantM213Vacuum(MultiSensorTests, TuyaDeviceTestCase):
                 },
             ],
         )
-        self.mark_secondary(["sensor_clean_area", "sensor_clean_time"])
+        self.mark_secondary(
+            ["sensor_clean_area", "sensor_clean_time", "binary_sensor_problem"]
+        )
 
     def test_supported_features(self):
         self.assertEqual(
             self.subject.supported_features,
             (
-                VacuumEntityFeature.STATE
-                | VacuumEntityFeature.STATUS
+                VacuumEntityFeature.CLEAN_SPOT
+                | VacuumEntityFeature.FAN_SPEED
+                | VacuumEntityFeature.LOCATE
+                | VacuumEntityFeature.PAUSE
+                | VacuumEntityFeature.RETURN_HOME
                 | VacuumEntityFeature.SEND_COMMAND
+                | VacuumEntityFeature.START
+                | VacuumEntityFeature.STATE
+                | VacuumEntityFeature.STATUS
+                | VacuumEntityFeature.STOP
                 | VacuumEntityFeature.TURN_ON
                 | VacuumEntityFeature.TURN_OFF
-                | VacuumEntityFeature.START
-                | VacuumEntityFeature.PAUSE
-                | VacuumEntityFeature.LOCATE
-                | VacuumEntityFeature.RETURN_HOME
-                | VacuumEntityFeature.CLEAN_SPOT
-                | VacuumEntityFeature.FAN_SPEED
             ),
         )
 
@@ -182,12 +184,12 @@ class TestLefantM213Vacuum(MultiSensorTests, TuyaDeviceTestCase):
         ):
             await self.subject.async_locate()
 
-    async def test_async_send_standby_command(self):
+    async def test_async_stop(self):
         async with assert_device_properties_set(
             self.subject._device,
             {COMMAND_DPS: "standby"},
         ):
-            await self.subject.async_send_command("standby")
+            await self.subject.async_stop()
 
     async def test_async_send_smart_command(self):
         async with assert_device_properties_set(

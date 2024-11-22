@@ -30,16 +30,6 @@ primary_entity:
     - id: 3
       name: current_humidity
       type: integer
-    - id: 11
-      name: error
-      type: integer
-      mapping:
-        - dps_val: 0
-          value: OK
-        - dps_val: 1
-          value: "Tank full"
-          icon: "mdi:cup-water"
-          icon_priority: 1
     - id: 12
       name: timer_hr
       type: integer
@@ -74,27 +64,30 @@ secondary_entities:
       - id: 8
         name: oscillate
         type: boolean
-  - entity: sensor
-    class: humidity
-    deprecated: humidifier
-    category: diagnostic
-    name: Current humidity
-    dps:
-      - id: 3
-        type: integer
-        name: sensor
-        class: measurement
-        unit: "%"
   - entity: binary_sensor
-    class: problem
-    name: Tank
+    translation_key: tank_full
     category: diagnostic
     dps:
       - id: 11
         name: sensor
         type: integer
         mapping:
+          - dps_val: 1
+            value: true
+          - value: false
+  - entity: binary_sensor
+    class: problem
+    category: diagnostic
+    dps:
+      - id: 11
+        type: bitfield
+        name: sensor
+        mapping:
           - dps_val: 0
             value: false
+          - dps_val: 1
+            value: false
           - value: true
-     
+      - id: 11
+        type: bitfield
+        name: fault_code

@@ -9,13 +9,6 @@ primary_entity:
     - id: 1
       name: switch
       type: boolean
-      mapping:
-        - dps_val: false
-          icon: "mdi:air-humidifier-off"
-          icon_priority: 3
-        - dps_val: true
-          icon: "mdi:air-humidifier"
-          icon_priority: 4
     - id: 2
       name: mode
       type: string
@@ -39,16 +32,6 @@ primary_entity:
         max: 80
       mapping:
         - step: 5
-    - id: 11
-      type: bitfield
-      name: error
-      mapping:
-        - dps_val: 16
-          value: Tank full or missing
-          icon: "mdi:cup-water"
-          icon_priority: 1
-        - dps_val: 0
-          value: OK
     - id: 104
       type: integer
       name: current_humidity
@@ -84,20 +67,14 @@ secondary_entities:
           - dps_val: "3"
             value: 100
   - entity: light
-    name: Front display
+    translation_key: display
     category: config
     dps:
       - id: 107
         type: boolean
         name: switch
-        mapping:
-          - dps_val: true
-            icon: "mdi:numeric"
-          - dps_val: false
-            icon: "mdi:numeric-off"
   - entity: lock
-    name: Child lock
-    icon: "mdi:hand-back-right-off"
+    translation_key: child_lock
     category: config
     dps:
       - id: 106
@@ -111,20 +88,8 @@ secondary_entities:
         name: sensor
         unit: C
         class: measurement
-  - entity: sensor
-    name: Current humidity
-    deprecated: humidifier
-    category: diagnostic
-    class: humidity
-    dps:
-      - id: 104
-        type: integer
-        name: sensor
-        unit: "%"
-        class: measurement
   - entity: binary_sensor
-    name: Tank
-    class: problem
+    translation_key: tank_full
     category: diagnostic
     dps:
       - id: 11
@@ -135,7 +100,6 @@ secondary_entities:
             value: true
           - value: false
   - entity: binary_sensor
-    name: Fault
     class: problem
     category: diagnostic
     dps:
@@ -148,6 +112,9 @@ secondary_entities:
           - dps_val: 16
             value: false
           - value: true
+      - id: 11
+        type: bitfield
+        name: fault_code
   - entity: binary_sensor
     name: Filter clean required
     class: problem
@@ -156,7 +123,3 @@ secondary_entities:
       - id: 108
         type: boolean
         name: sensor
-
-
-
-

@@ -1,6 +1,7 @@
 """
 Setup for different kinds of Tuya button devices
 """
+
 import logging
 
 from homeassistant.components.button import ButtonDeviceClass, ButtonEntity
@@ -48,7 +49,9 @@ class TuyaLocalButton(TuyaLocalEntity, ButtonEntity):
         except ValueError:
             if dclass:
                 _LOGGER.warning(
-                    "Unrecognized button device class of %s ignored",
+                    "%s/%s: Unrecognized button device class of %s ignored",
+                    self._config._device.config,
+                    self.name or "button",
                     dclass,
                 )
 

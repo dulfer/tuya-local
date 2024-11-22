@@ -1,7 +1,9 @@
 """Test the config parser"""
+
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import MagicMock
 
+import voluptuous as vol
 from fuzzywuzzy import fuzz
 from homeassistant.components.sensor import SensorDeviceClass
 
@@ -19,6 +21,152 @@ from custom_components.tuya_local.sensor import TuyaLocalSensor
 
 from .const import GPPH_HEATER_PAYLOAD, KOGAN_HEATER_PAYLOAD
 
+PRODUCT_SCHEMA = vol.Schema(
+    {
+        vol.Required("id"): str,
+        vol.Optional("name"): str,
+    }
+)
+CONDMAP_SCHEMA = vol.Schema(
+    {
+        vol.Optional("dps_val"): vol.Maybe(vol.Any(str, int, bool, list)),
+        vol.Optional("value"): vol.Maybe(vol.Any(str, int, bool, float)),
+        vol.Optional("value_redirect"): str,
+        vol.Optional("value_mirror"): str,
+        vol.Optional("available"): str,
+        vol.Optional("range"): {
+            vol.Required("min"): int,
+            vol.Required("max"): int,
+        },
+        vol.Optional("target_range"): {
+            vol.Required("min"): int,
+            vol.Required("max"): int,
+        },
+        vol.Optional("scale"): vol.Any(int, float),
+        vol.Optional("step"): vol.Any(int, float),
+        vol.Optional("mask"): str,
+        vol.Optional("endianness"): str,
+        vol.Optional("invert"): True,
+        vol.Optional("unit"): str,
+        vol.Optional("icon"): vol.Match(r"^mdi:"),
+        vol.Optional("icon_priority"): int,
+        vol.Optional("hidden"): True,
+        vol.Optional("invalid"): True,
+        vol.Optional("default"): True,
+    }
+)
+COND_SCHEMA = CONDMAP_SCHEMA.extend(
+    {
+        vol.Required("dps_val"): vol.Maybe(vol.Any(str, int, bool, list)),
+        vol.Optional("mapping"): [CONDMAP_SCHEMA],
+    }
+)
+MAPPING_SCHEMA = CONDMAP_SCHEMA.extend(
+    {
+        vol.Optional("constraint"): str,
+        vol.Optional("conditions"): [COND_SCHEMA],
+    }
+)
+FORMAT_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): str,
+        vol.Required("bytes"): int,
+        vol.Optional("range"): {
+            vol.Required("min"): int,
+            vol.Required("max"): int,
+        },
+    }
+)
+DP_SCHEMA = vol.Schema(
+    {
+        vol.Required("id"): int,
+        vol.Required("type"): vol.In(
+            [
+                "string",
+                "integer",
+                "boolean",
+                "hex",
+                "base64",
+                "bitfield",
+                "unixtime",
+                "json",
+                "utf16b64",
+            ]
+        ),
+        vol.Required("name"): str,
+        vol.Optional("range"): {
+            vol.Required("min"): int,
+            vol.Required("max"): int,
+        },
+        vol.Optional("unit"): str,
+        vol.Optional("precision"): vol.Any(int, float),
+        vol.Optional("class"): vol.In(
+            [
+                "measurement",
+                "total",
+                "total_increasing",
+            ]
+        ),
+        vol.Optional("optional"): True,
+        vol.Optional("persist"): False,
+        vol.Optional("hidden"): True,
+        vol.Optional("readonly"): True,
+        vol.Optional("sensitive"): True,
+        vol.Optional("force"): True,
+        vol.Optional("icon_priority"): int,
+        vol.Optional("mapping"): [MAPPING_SCHEMA],
+        vol.Optional("format"): [FORMAT_SCHEMA],
+    }
+)
+ENTITY_SCHEMA = vol.Schema(
+    {
+        vol.Required("entity"): vol.In(
+            [
+                "alarm_control_panel",
+                "binary_sensor",
+                "button",
+                "camera",
+                "climate",
+                "cover",
+                "event",
+                "fan",
+                "humidifier",
+                "lawn_mower",
+                "light",
+                "lock",
+                "number",
+                "remote",
+                "select",
+                "sensor",
+                "siren",
+                "switch",
+                "vacuum",
+                "valve",
+                "water_heater",
+            ]
+        ),
+        vol.Optional("name"): str,
+        vol.Optional("class"): str,
+        vol.Optional(vol.Or("translation_key", "translation_only_key")): str,
+        vol.Optional("translation_placeholders"): dict[str, str],
+        vol.Optional("category"): vol.In(["config", "diagnostic"]),
+        vol.Optional("icon"): vol.Match(r"^mdi:"),
+        vol.Optional("icon_priority"): int,
+        vol.Optional("deprecated"): str,
+        vol.Optional("mode"): vol.In(["box", "slider"]),
+        vol.Required("dps"): [DP_SCHEMA],
+    }
+)
+YAML_SCHEMA = vol.Schema(
+    {
+        vol.Required("name"): str,
+        vol.Optional("legacy_type"): str,
+        vol.Optional("products"): [PRODUCT_SCHEMA],
+        vol.Required("primary_entity"): ENTITY_SCHEMA,
+        vol.Optional("secondary_entities"): [ENTITY_SCHEMA],
+    }
+)
+
 KNOWN_DPS = {
     "alarm_control_panel": {
         "required": ["alarm_state"],
@@ -33,7 +181,6 @@ KNOWN_DPS = {
     "climate": {
         "required": [],
         "optional": [
-            "aux_heat",
             "current_temperature",
             "current_humidity",
             "fan_mode",
@@ -62,14 +209,19 @@ KNOWN_DPS = {
             "reversed",
         ],
     },
+    "event": {"required": ["event"], "optional": []},
     "fan": {
         "required": [{"or": ["preset_mode", "speed"]}],
         "optional": ["switch", "oscillate", "direction"],
     },
-    "humidifier": {"required": ["switch", "humidity"], "optional": ["mode"]},
+    "humidifier": {
+        "required": ["humidity"],
+        "optional": ["switch", "mode", "current_humidity"],
+    },
+    "lawn_mower": {"required": ["activity", "command"], "optional": []},
     "light": {
         "required": [{"or": ["switch", "brightness", "effect"]}],
-        "optional": ["color_mode", "color_temp", "rgbhsv"],
+        "optional": ["color_mode", "color_temp", {"xor": ["rgbhsv", "named_color"]}],
     },
     "lock": {
         "required": [],
@@ -93,6 +245,10 @@ KNOWN_DPS = {
         "required": ["value"],
         "optional": ["unit", "minimum", "maximum"],
     },
+    "remote": {
+        "required": ["send"],
+        "optional": ["receive"],
+    },
     "select": {"required": ["option"], "optional": []},
     "sensor": {"required": ["sensor"], "optional": ["unit"]},
     "siren": {
@@ -112,6 +268,10 @@ KNOWN_DPS = {
             "error",
             "fan_speed",
         ],
+    },
+    "valve": {
+        "required": ["valve"],
+        "optional": [],
     },
     "water_heater": {
         "required": [],
@@ -140,7 +300,7 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
         self.assertTrue(found)
 
     def dp_match(self, condition, accounted, unaccounted, known, required=False):
-        if type(condition) is str:
+        if isinstance(condition, str):
             known.add(condition)
             if condition in unaccounted:
                 unaccounted.remove(condition)
@@ -195,18 +355,18 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
 
         if prior_match:
             for c in conditions:
-                if type(c) is str:
+                if isinstance(c, str):
                     accounted.add(c)
                 elif "and" in c:
                     for c2 in c["and"]:
-                        if type(c2) is str:
+                        if isinstance(c2, str):
                             accounted.add(c2)
 
         return prior_match or not required
 
     def rule_broken_msg(self, rule):
         msg = ""
-        if type(rule) is str:
+        if isinstance(rule, str):
             return f"{msg} {rule}"
         elif "and" in rule:
             msg = f"{msg} all of ["
@@ -228,7 +388,7 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
     def check_entity(self, entity, cfg):
         """
         Check that the entity has a dps list and each dps has an id,
-        type and name.
+        type and name, and any other consistency checks.
         """
         self.assertIsNotNone(
             entity._config.get("entity"), f"entity type missing in {cfg}"
@@ -240,7 +400,10 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
         functions = set()
         extra = set()
         known = set()
+        redirects = set()
 
+        # Basic checks of dps, and initialising of redirects and extras sets
+        # for later checking
         for dp in entity.dps():
             self.assertIsNotNone(
                 dp._config.get("id"), f"dp id missing from {e} in {cfg}"
@@ -252,7 +415,34 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
                 dp._config.get("name"), f"dp name missing from {e} in {cfg}"
             )
             extra.add(dp.name)
+            mappings = dp._config.get("mapping", [])
+            self.assertIsInstance(
+                mappings,
+                list,
+                f"mapping is not a list in {cfg}; entity {e}, dp {dp.name}",
+            )
+            for m in mappings:
+                conditions = m.get("conditions", [])
+                self.assertIsInstance(
+                    conditions,
+                    list,
+                    f"conditions is not a list in {cfg}; entity {e}, dp {dp.name}",
+                )
+                for c in conditions:
+                    if c.get("value_redirect"):
+                        redirects.add(c.get("value_redirect"))
+                    if c.get("value_mirror"):
+                        redirects.add(c.get("value_mirror"))
+                if m.get("value_redirect"):
+                    redirects.add(m.get("value_redirect"))
+                if m.get("value_mirror"):
+                    redirects.add(m.get("value_mirror"))
 
+        # Check redirects all exist
+        for redirect in redirects:
+            self.assertIn(redirect, extra, f"dp {redirect} missing from {e} in {cfg}")
+
+        # Check dps that are required for this entity type all exist
         expected = KNOWN_DPS.get(entity.entity)
         for rule in expected["required"]:
             self.assertTrue(
@@ -303,6 +493,11 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
             if isinstance(parsed, str) or isinstance(parsed._config, str):
                 self.fail(f"unparsable yaml in {cfg}")
 
+            try:
+                YAML_SCHEMA(parsed._config)
+            except vol.MultipleInvalid as e:
+                self.fail(f"Validation error in {cfg}: {e}")
+
             self.assertIsNotNone(
                 parsed._config.get("name"),
                 f"name missing from {cfg}",
@@ -319,7 +514,11 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
                 self.check_entity(entity, cfg)
                 entities.append(entity.config_id)
             # check entities are unique
-            self.assertCountEqual(entities, set(entities))
+            self.assertCountEqual(
+                entities,
+                set(entities),
+                f"Duplicate entities in {cfg}",
+            )
 
             # If there are no secondary entities, check that it is intended
             if not secondary:
@@ -329,13 +528,30 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
                         f"misspelled secondary_entities in {cfg}",
                     )
 
+    def test_configs_can_be_matched(self):
+        """Test that the config files can be matched to a device."""
+        for cfg in available_configs():
+            required_dps = 0
+            parsed = TuyaDeviceConfig(cfg)
+            for entity in parsed.all_entities():
+                for dp in entity.dps():
+                    if not dp.optional:
+                        required_dps += 1
+            self.assertGreater(
+                required_dps,
+                0,
+                msg=f"No required dps found in {cfg}",
+            )
+
     # Most of the device_config functionality is exercised during testing of
     # the various supported devices.  These tests concentrate only on the gaps.
 
     def test_match_quality(self):
         """Test the match_quality function."""
+
         cfg = get_config("deta_fan")
         q = cfg.match_quality({**KOGAN_HEATER_PAYLOAD, "updated_at": 0})
+
         self.assertEqual(q, 0)
         q = cfg.match_quality({**GPPH_HEATER_PAYLOAD})
         self.assertEqual(q, 0)
@@ -349,10 +565,10 @@ class TestDeviceConfig(IsolatedAsyncioTestCase):
     async def test_dps_async_set_readonly_value_fails(self):
         """Test that setting a readonly dps fails."""
         mock_device = MagicMock()
-        cfg = get_config("goldair_gpph_heater")
-        error_code = cfg.primary_entity.find_dps("error")
+        cfg = get_config("aquatech_x6_water_heater")
+        temp = cfg.primary_entity.find_dps("temperature")
         with self.assertRaises(TypeError):
-            await error_code.async_set_value(mock_device, 1)
+            await temp.async_set_value(mock_device, 20)
 
     def test_dps_values_is_empty_with_no_mapping(self):
         """

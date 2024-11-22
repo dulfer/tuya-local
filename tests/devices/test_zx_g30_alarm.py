@@ -1,11 +1,10 @@
 """Tests for the ZX G30 Alarm Control Panel."""
+
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntityFeature as Feature,
 )
-from homeassistant.const import (
-    STATE_ALARM_ARMED_AWAY,
-    STATE_ALARM_ARMED_HOME,
-    STATE_ALARM_DISARMED,
+from homeassistant.components.alarm_control_panel import (
+    AlarmControlPanelState,
 )
 
 from ..const import ZXG30_ALARM_PAYLOAD
@@ -40,11 +39,14 @@ class TestZXG30Alarm(TuyaDeviceTestCase):
                 "number_exit_delay",
                 "binary_sensor_tamper",
                 "switch_voice_prompt",
-                "switch_ac_power",
-                "binary_sensor_low_battery_alarm",
+                "binary_sensor_plug",
+                "binary_sensor_battery",
+                "switch_alarm_call",
+                "switch_alarm_sms",
                 "switch_alarm_notification",
                 "number_entry_delay",
                 "switch_tick_down",
+                "button_factory_reset",
             ]
         )
 
@@ -56,7 +58,7 @@ class TestZXG30Alarm(TuyaDeviceTestCase):
 
     def test_state(self):
         self.dps[ALARMSTATE_DP] = "disarmed"
-        self.assertEqual(self.subject.state, STATE_ALARM_DISARMED)
+        self.assertEqual(self.subject.alarm_state, AlarmControlPanelState.DISARMED)
 
     async def test_arm_home(self):
         async with assert_device_properties_set(

@@ -1,7 +1,7 @@
 name: Remora pool heatpump
 primary_entity:
   entity: climate
-  translation_key: pool_heatpump
+  translation_only_key: pool_heatpump
   dps:
     - id: 1
       name: hvac_mode
@@ -18,6 +18,7 @@ primary_entity:
     - id: 2
       name: temperature
       type: integer
+      unit: C
       range:
         min: 5
         max: 40
@@ -40,16 +41,6 @@ primary_entity:
           value: quick_cool
         - dps_val: c_silent
           value: quiet_cool
-    - id: 9
-      type: integer
-      name: error
-      mapping:
-        - dps_val: 0
-          value: "OK"
-        - dps_val: 1
-          value: "Water Flow Protection"
-          icon: "mdi:water-pump-off"
-          icon_priority: 2
 secondary_entities:
   - entity: binary_sensor
     name: Water flow
@@ -58,8 +49,24 @@ secondary_entities:
     dps:
       - id: 9
         name: sensor
-        type: integer
+        type: bitfield
+        mapping:
+          - dps_val: 1
+            value: true
+          - value: false
+  - entity: binary_sensor
+    class: problem
+    category: diagnostic
+    dps:
+      - id: 9
+        type: bitfield
+        name: sensor
         mapping:
           - dps_val: 0
             value: false
+          - dps_val: 1
+            value: false
           - value: true
+      - id: 9
+        type: bitfield
+        name: fault_code

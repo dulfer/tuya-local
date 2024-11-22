@@ -50,25 +50,25 @@ primary_entity:
     - id: 15
       type: string
       name: swing_1
-    - id: 20
-      type: bitfield
-      name: fault_code
     - id: 109
-      type: integer
+      type: bitfield
       name: feature_flags
     - id: 110
       type: boolean
-      name: swing_2
+      name: swing_mode
+      mapping:
+        - dps_val: true
+          value: "vertical"
+        - dps_val: false
+          value: "off"
 secondary_entities:
   - entity: switch
-    name: Ioniser
-    icon: "mdi:creation"
+    translation_key: ionizer
     dps:
       - id: 11
         type: boolean
         name: switch
   - entity: binary_sensor
-    name: Fault
     class: problem
     category: diagnostic
     dps:
@@ -79,9 +79,11 @@ secondary_entities:
           - dps_val: 0
             value: false
           - value: true
+      - id: 20
+        type: bitfield
+        name: fault_code
   - entity: switch
-    name: Sleep
-    icon: "mdi:power-sleep"
+    translation_key: sleep
     dps:
       - id: 103
         type: boolean
@@ -89,7 +91,7 @@ secondary_entities:
   - entity: number
     name: "On timer"
     category: config
-    icon: "mdi:timer"
+    translation_key: timer
     dps:
       - id: 104
         type: integer
@@ -104,7 +106,7 @@ secondary_entities:
   - entity: number
     name: "Off timer"
     category: config
-    icon: "mdi:timer"
+    translation_key: timer
     dps:
       - id: 105
         type: integer

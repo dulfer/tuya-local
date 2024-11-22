@@ -21,10 +21,6 @@ primary_entity:
       type: bitfield
       name: test
       optional: true
-    - id: 26
-      type: bitfield
-      name: fault_code
-      optional: true
 secondary_entities:
   - entity: sensor
     class: current
@@ -103,13 +99,12 @@ secondary_entities:
         unit: kWh
         mapping:
           - dps_val: null
-          - scale: 100
+          - scale: 1000
       - id: 25
         type: integer
         name: calibration
         optional: true
   - entity: binary_sensor
-    name: Fault
     class: problem
     category: diagnostic
     dps:
@@ -124,3 +119,7 @@ secondary_entities:
           - dps_val: 0
             value: false
           - value: true
+      - id: 26
+        type: bitfield
+        name: fault_code
+        optional: true

@@ -1,9 +1,11 @@
 """
 Setup for different kinds of Tuya humidifier devices
 """
+
 import logging
 
 from homeassistant.components.humidifier import (
+    HumidifierAction,
     HumidifierDeviceClass,
     HumidifierEntity,
     HumidifierEntityFeature,
@@ -48,9 +50,10 @@ class TuyaLocalHumidifier(TuyaLocalEntity, HumidifierEntity):
         self._humidity_dp = dps_map.pop("humidity", None)
         self._mode_dp = dps_map.pop("mode", None)
         self._switch_dp = dps_map.pop("switch", None)
+        self._action_dp = dps_map.pop("action", None)
         self._init_end(dps_map)
 
-        self._support_flags = 0
+        self._support_flags = HumidifierEntityFeature(0)
         if self._mode_dp:
             self._support_flags |= HumidifierEntityFeature.MODES
 
@@ -75,6 +78,24 @@ class TuyaLocalHumidifier(TuyaLocalEntity, HumidifierEntity):
         if self._switch_dp is None:
             return self.available
         return self._switch_dp.get_value(self._device)
+
+    @property
+    def action(self):
+        """Return the current action."""
+        if self._action_dp:
+            if not self.is_on:
+                return HumidifierAction.OFF
+
+            action = self._action_dp.get_value(self._device)
+            try:
+                return HumidifierAction(action) if action else None
+            except ValueError:
+                _LOGGER.warning(
+                    "%s/%s: Unrecognised action %s ignored",
+                    self._config._device.config,
+                    self.name or "humidifier",
+                    action,
+                )
 
     async def async_turn_on(self, **kwargs):
         """Turn the switch on"""
@@ -103,7 +124,7 @@ class TuyaLocalHumidifier(TuyaLocalEntity, HumidifierEntity):
         if self._humidity_dp is None:
             return None
         r = self._humidity_dp.range(self._device)
-        return DEFAULT_MIN_HUMIDITY if r is None else r["min"]
+        return DEFAULT_MIN_HUMIDITY if r is None else r[0]
 
     @property
     def max_humidity(self):
@@ -111,7 +132,7 @@ class TuyaLocalHumidifier(TuyaLocalEntity, HumidifierEntity):
         if self._humidity_dp is None:
             return None
         r = self._humidity_dp.range(self._device)
-        return DEFAULT_MAX_HUMIDITY if r is None else r["max"]
+        return DEFAULT_MAX_HUMIDITY if r is None else r[1]
 
     async def async_set_humidity(self, humidity):
         if self._humidity_dp is None:
@@ -129,9 +150,8 @@ class TuyaLocalHumidifier(TuyaLocalEntity, HumidifierEntity):
     @property
     def available_modes(self):
         """Return the list of presets that this device supports."""
-        if self._mode_dp is None:
-            return None
-        return self._mode_dp.values(self._device)
+        if self._mode_dp:
+            return self._mode_dp.values(self._device)
 
     async def async_set_mode(self, mode):
         """Set the preset mode."""

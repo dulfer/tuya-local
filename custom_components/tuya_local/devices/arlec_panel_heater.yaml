@@ -4,6 +4,7 @@ products:
     name: Arlec Panel Heater (2400W)
 primary_entity:
   entity: climate
+  translation_only_key: heater
   dps:
     - id: 1
       name: hvac_mode
@@ -11,20 +12,18 @@ primary_entity:
       mapping:
         - dps_val: true
           value: "heat"
-          icon: "mdi:radiator"
         - dps_val: false
           value: "off"
-          icon: "mdi:radiator-disabled"
     - id: 2
       name: temperature
       type: integer
+      unit: C
       range:
         min: 5
         max: 35
     - id: 3
       name: current_temperature
       type: integer
-      readonly: true
     - id: 4
       name: preset_mode
       type: string
@@ -35,26 +34,26 @@ primary_entity:
           value: boost
         - dps_val: af
           value: away
-    - id: 12
-      name: error
-      type: bitfield
-      mapping:
-        - dps_val: 0
-          value: "OK"
-
 secondary_entities:
   - entity: lock
-    name: Child lock
-    icon: "mdi:hand-back-right-off"
+    translation_key: child_lock
     category: config
     dps:
-      - id: 6 # can be 7
+      - id: 6
         type: boolean
         name: lock
+        # can be 7
+        optional: true
+        mapping:
+          - dps_val: null
+            value_redirect: alternate
+      - id: 7
+        type: boolean
+        optional: true
+        name: alternate
   - entity: number
-    name: Timer
+    translation_key: timer
     category: config
-    icon: "mdi:timer"
     dps:
       - id: 10
         type: integer
@@ -63,3 +62,17 @@ secondary_entities:
         range:
           min: 0
           max: 24
+  - entity: binary_sensor
+    class: problem
+    category: diagnostic
+    dps:
+      - id: 12
+        type: bitfield
+        name: sensor
+        mapping:
+          - dps_val: 0
+            value: false
+          - value: true
+      - id: 12
+        type: bitfield
+        name: fault_code

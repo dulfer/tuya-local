@@ -16,6 +16,16 @@ primary_entity:
         - scale: 10
 secondary_entities:
   - entity: sensor
+    name: Total dissolved solids
+    icon: "mdi:water-opacity"
+    dps:
+      - id: 1
+        type: integer
+        name: sensor
+        class: measurement
+        unit: ppm
+        optional: true
+  - entity: sensor
     class: battery
     category: diagnostic
     dps:
@@ -32,6 +42,7 @@ secondary_entities:
         type: integer
         name: sensor
         class: measurement
+        optional: true
         mapping:
           - scale: 100
           - dps_val: 1500
@@ -77,10 +88,10 @@ secondary_entities:
       - id: 102
         type: boolean
         name: switch
+        optional: true
   - entity: light
-    name: Backlight
+    translation_key: backlight
     category: config
-    icon: "mdi:television-ambient-light"
     dps:
       - id: 103
         type: boolean
@@ -116,6 +127,7 @@ secondary_entities:
       - id: 106
         type: boolean
         name: switch
+        optional: true
   - entity: number
     name: Maximum pH
     category: config
@@ -238,4 +250,3 @@ secondary_entities:
         range:
           min: 0
           max: 100
-

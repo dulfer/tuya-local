@@ -4,7 +4,7 @@ products:
 primary_entity:
   entity: fan
   icon: "mdi:air-purifier"
-  translation_key: fan_with_presets
+  translation_only_key: fan_with_presets
   dps:
     - id: 1
       name: switch
@@ -23,9 +23,6 @@ primary_entity:
           value: smart
         - dps_val: sleep
           value: sleep
-    - id: 22
-      name: error_code
-      type: integer
 secondary_entities:
   - entity: sensor
     name: Filter
@@ -43,38 +40,35 @@ secondary_entities:
         type: boolean
         name: switch
         mapping:
-            - dps_val: true
-              icon: "mdi:led-on"
-            - dps_val: false
-              icon: "mdi:led-off"
+          - dps_val: true
+            icon: "mdi:led-on"
+          - dps_val: false
+            icon: "mdi:led-off"
   - entity: button
-    name: Filter reset
+    translation_key: filter_reset
     category: config
-    class: restart
     dps:
       - id: 11
         type: boolean
         name: button
   - entity: select
-    name: Timer
+    translation_key: timer
     category: config
-    icon: "mdi:timer"
     dps:
       - id: 18
         type: string
         name: option
         mapping:
           - dps_val: cancel
-            value: "off"
+            value: cancel
           - dps_val: "1h"
-            value: "1 hour"
+            value: "1h"
           - dps_val: "2h"
-            value: "2 hours" 
+            value: "2h"
   - entity: sensor
-    name: Timer
+    translation_key: time_remaining
     class: duration
     category: diagnostic
-    icon: "mdi:timer"
     dps:
       - id: 19
         name: sensor
@@ -95,11 +89,10 @@ secondary_entities:
           - dps_val: "good"
             value: "Good"
           - dps_val: "medium"
-            value: "Medium" 
+            value: "Medium"
           - dps_val: "severe"
-            value: "Severe" 
+            value: "Severe"
   - entity: binary_sensor
-    name: Error
     category: diagnostic
     class: problem
     dps:
@@ -110,3 +103,6 @@ secondary_entities:
           - dps_val: 0
             value: false
           - value: true
+      - id: 22
+        name: fault_code
+        type: bitfield

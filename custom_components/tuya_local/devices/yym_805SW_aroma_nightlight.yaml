@@ -1,23 +1,20 @@
-# DPS sample: {'updated_at': 1674433099.9169242, '1': True, '2': 'large', '3': '1', '5': True, '6': 'colourful1', '8': '001fff00e8ffff'}
+# DPS sample: {'updated_at': 1674433099.9169242, '1': True, '2': 'large',
+#              '3': '1', '5': True, '6': 'colourful1', '8': '001fff00e8ffff'}
 name: Aroma diffuser
 products:
   - id: c0nh3LmEk0NDebrq
-    model: YYM-805SW
+    name: YYM-805SW
   - id: 4870500398f4abbfbae4
-    model: GX
+    name: GX
   - id: kgczidn0awas0prr
-    manufacturer: Tellur
+    name: Tellur
 primary_entity:
   entity: fan
+  translation_key: aroma_diffuser
   dps:
     - id: 1
       name: switch
       type: boolean
-      mapping:
-        - dps_val: true
-          icon: "mdi:scent"
-        - dps_val: false
-          icon: "mdi:scent-off"
     - id: 2
       name: speed
       type: string
@@ -39,14 +36,9 @@ primary_entity:
                   value: 100
                 - dps_val: low
                   value: 50
-    - id: 9
-      name: fault_code
-      type: bitfield
-      optional: true
 secondary_entities:
   - entity: light
-    name: Nightlight
-    icon: "mdi:light-recessed"
+    translation_key: nightlight
     dps:
       - id: 5
         name: switch
@@ -85,8 +77,7 @@ secondary_entities:
               min: 0
               max: 255
   - entity: select
-    name: Timer
-    icon: "mdi:timer"
+    translation_key: timer
     category: config
     dps:
       - id: 3
@@ -94,18 +85,35 @@ secondary_entities:
         type: string
         mapping:
           - dps_val: "cancel"
-            value: "Off"
+            value: cancel
           - dps_val: "1"
-            value: "1 hour"
+            value: "1h"
           - dps_val: "3"
-            value: "3 hours"
+            value: "3h"
           - dps_val: "6"
-            value: "6 hours"
+            value: "6h"
       - id: 4
         name: remaining
-        readolny: true
         optional: true
         type: integer
         range:
           min: 0
           max: 360
+  - entity: binary_sensor
+    class: problem
+    category: diagnostic
+    dps:
+      - id: 9
+        type: bitfield
+        optional: true
+        name: sensor
+        mapping:
+          - dps_val: 0
+            value: false
+          - dps_val: null
+            value: false
+          - value: true
+      - id: 9
+        type: bitfield
+        name: fault_code
+        optional: true

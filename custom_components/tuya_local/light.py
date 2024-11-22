@@ -1,16 +1,18 @@
 """
 Setup for different kinds of Tuya light devices
 """
+
 import logging
 from struct import pack, unpack
 
 import homeassistant.util.color as color_util
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
-    ATTR_COLOR_TEMP,
+    ATTR_COLOR_TEMP_KELVIN,
     ATTR_EFFECT,
     ATTR_HS_COLOR,
     ATTR_WHITE,
+    EFFECT_OFF,
     ColorMode,
     LightEntity,
     LightEntityFeature,
@@ -52,29 +54,41 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
         self._color_mode_dps = dps_map.pop("color_mode", None)
         self._color_temp_dps = dps_map.pop("color_temp", None)
         self._rgbhsv_dps = dps_map.pop("rgbhsv", None)
+        self._named_color_dps = dps_map.pop("named_color", None)
         self._effect_dps = dps_map.pop("effect", None)
         self._init_end(dps_map)
+
+        # Set min and max color temp
+        if self._color_temp_dps:
+            m = self._color_temp_dps._find_map_for_dps(0)
+            if m:
+                tr = m.get("target_range")
+                if tr:
+                    self._attr_min_color_temp_kelvin = tr.get("min")
+                    self._attr_max_color_temp_kelvin = tr.get("max")
 
     @property
     def supported_color_modes(self):
         """Return the supported color modes for this light."""
         if self._color_mode_dps:
-            return [
+            return {
                 ColorMode(mode)
                 for mode in self._color_mode_dps.values(self._device)
                 if mode and hasattr(ColorMode, mode.upper())
-            ]
+            }
         else:
             try:
                 mode = ColorMode(self.color_mode)
                 if mode and mode != ColorMode.UNKNOWN:
-                    return [mode]
+                    return {mode}
             except ValueError:
                 _LOGGER.warning(
-                    "Unrecognised color mode %s ignored",
+                    "%s/%s: Unrecognised color mode %s ignored",
+                    self._config._device.config,
+                    self.name or "light",
                     self.color_mode,
                 )
-        return []
+        return set()
 
     @property
     def supported_features(self):
@@ -82,7 +96,7 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
         if self.effect_list:
             return LightEntityFeature.EFFECT
         else:
-            return 0
+            return LightEntityFeature(0)
 
     @property
     def color_mode(self):
@@ -92,6 +106,8 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
             return from_dp
 
         if self._rgbhsv_dps:
+            return ColorMode.HS
+        elif self._named_color_dps:
             return ColorMode.HS
         elif self._color_temp_dps:
             return ColorMode.COLOR_TEMP
@@ -111,17 +127,10 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
                 return ColorMode(mode)
 
     @property
-    def color_temp(self):
-        """Return the color temperature in mireds"""
+    def color_temp_kelvin(self):
+        """Return the color temperature in kelvin."""
         if self._color_temp_dps:
-            unscaled = self._color_temp_dps.get_value(self._device)
-            r = self._color_temp_dps.range(self._device)
-            if r and isinstance(unscaled, (int, float)):
-                return round(
-                    unscaled * 347 / (r["max"] - r["min"]) + 153 - r["min"],
-                )
-            else:
-                return unscaled
+            return self._color_temp_dps.get_value(self._device)
 
     @property
     def is_on(self):
@@ -137,16 +146,36 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
             return self.available
 
     @property
+    def _brightness_control_by_hsv(self):
+        """Return whether brightness is controlled by HSV."""
+        v_available = self._rgbhsv_dps and "v" in self._rgbhsv_dps.format["names"]
+        b_available = self._brightness_dps is not None
+        current_raw_mode = self.raw_color_mode
+        current_mode = self.color_mode
+
+        if current_raw_mode == ColorMode.HS and v_available:
+            return True
+        if current_raw_mode is None and current_mode == ColorMode.HS and v_available:
+            return True
+        if b_available:
+            return False
+        return v_available
+
+    @property
     def brightness(self):
         """Get the current brightness of the light"""
-        if self.raw_color_mode == ColorMode.HS and self._rgbhsv_dps:
+        if self._brightness_control_by_hsv:
             return self._hsv_brightness
         return self._white_brightness
 
     @property
     def _white_brightness(self):
         if self._brightness_dps:
-            return self._brightness_dps.get_value(self._device)
+            r = self._brightness_dps.range(self._device)
+            val = self._brightness_dps.get_value(self._device)
+            if r and val is not None:
+                val = color_util.value_to_brightness(r, val)
+            return val
 
     @property
     def _unpacked_rgbhsv(self):
@@ -175,6 +204,11 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
                     idx += 1
 
                 return rgbhsv
+        elif self._named_color_dps:
+            colour = self._named_color_dps.get_value(self._device)
+            if colour:
+                rgb = color_util.color_name_to_rgb(colour)
+                return {"r": rgb[0], "g": rgb[1], "b": rgb[2]}
 
     @property
     def _hsv_brightness(self):
@@ -204,11 +238,13 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
         if self._effect_dps:
             return self._effect_dps.values(self._device)
         elif self._color_mode_dps:
-            return [
+            effects = [
                 effect
                 for effect in self._color_mode_dps.values(self._device)
                 if effect and not hasattr(ColorMode, effect.upper())
             ]
+            effects.append(EFFECT_OFF)
+            return effects
 
     @property
     def effect(self):
@@ -219,6 +255,26 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
             mode = self._color_mode_dps.get_value(self._device)
             if mode and not hasattr(ColorMode, mode.upper()):
                 return mode
+            return EFFECT_OFF
+
+    def named_color_from_hsv(self, hs, brightness):
+        """Get the named color from the rgb value"""
+        if self._named_color_dps:
+            palette = self._named_color_dps.values(self._device)
+            xy = color_util.color_hs_to_xy(*hs)
+            distance = float("inf")
+            best_match = None
+            for entry in palette:
+                rgb = color_util.color_name_to_rgb(entry)
+                xy_entry = color_util.color_RGB_to_xy(*rgb)
+                d = color_util.get_distance_between_two_points(
+                    color_util.XYPoint(*xy),
+                    color_util.XYPoint(*xy_entry),
+                )
+                if d < distance:
+                    distance = d
+                    best_match = entry
+            return best_match
 
     async def async_turn_on(self, **params):
         settings = {}
@@ -233,6 +289,10 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
                     "Setting brightness via WHITE parameter to %d",
                     bright,
                 )
+                r = self._brightness_dps.range(self._device)
+                if r:
+                    bright = color_util.brightness_to_value(r, bright)
+
                 settings = {
                     **settings,
                     **self._brightness_dps.get_values_to_set(
@@ -240,17 +300,17 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
                         bright,
                     ),
                 }
-        elif self._color_temp_dps and ATTR_COLOR_TEMP in params:
+        elif self._color_temp_dps and ATTR_COLOR_TEMP_KELVIN in params:
             if self.color_mode != ColorMode.COLOR_TEMP:
                 color_mode = ColorMode.COLOR_TEMP
 
-            color_temp = params.get(ATTR_COLOR_TEMP)
-            r = self._color_temp_dps.range(self._device)
-
-            if r and color_temp:
-                color_temp = round(
-                    (color_temp - 153 + r["min"]) * (r["max"] - r["min"]) / 347
-                )
+            color_temp = params.get(ATTR_COLOR_TEMP_KELVIN)
+            # Light groups use the widest range from the lights in the
+            # group, so we are expected to silently handle out of range values
+            if color_temp < self.min_color_temp_kelvin:
+                color_temp = self.min_color_temp_kelvin
+            if color_temp > self.max_color_temp_kelvin:
+                color_temp = self.max_color_temp_kelvin
 
             _LOGGER.debug("Setting color temp to %d", color_temp)
             settings = {
@@ -262,9 +322,9 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
             }
         elif self._rgbhsv_dps and (
             ATTR_HS_COLOR in params
-            or (ATTR_BRIGHTNESS in params and self.raw_color_mode == ColorMode.HS)
+            or (ATTR_BRIGHTNESS in params and self._brightness_control_by_hsv)
         ):
-            if self.raw_color_mode != ColorMode.HS:
+            if self.color_mode != ColorMode.HS:
                 color_mode = ColorMode.HS
 
             hs = params.get(ATTR_HS_COLOR, self.hs_color or (0, 0))
@@ -303,7 +363,9 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
                     val = round(rgbhsv[n] * scale)
                     if val < r["min"]:
                         _LOGGER.warning(
-                            "Color data %s=%d constrained to be above %d",
+                            "%s/%s: Color data %s=%d constrained to be above %d",
+                            self._config._device.config,
+                            self.name or "light",
                             n,
                             val,
                             r["min"],
@@ -319,6 +381,21 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
                         self._rgbhsv_dps.encode_value(binary),
                     ),
                 }
+        elif self._named_color_dps and ATTR_HS_COLOR in params:
+            if self.color_mode != ColorMode.HS:
+                color_mode = ColorMode.HS
+            hs = params.get(ATTR_HS_COLOR, self.hs_color or (0, 0))
+            brightness = params.get(ATTR_BRIGHTNESS, self.brightness or 255)
+            best_match = self.named_color_from_hsv(hs, brightness)
+            _LOGGER.debug("Setting color to %s", best_match)
+            if best_match:
+                settings = {
+                    **settings,
+                    **self._named_color_dps.get_values_to_set(
+                        self._device,
+                        best_match,
+                    ),
+                }
         if self._color_mode_dps:
             if color_mode:
                 _LOGGER.debug("Auto setting color mode to %s", color_mode)
@@ -332,6 +409,14 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
             elif not self._effect_dps:
                 effect = params.get(ATTR_EFFECT)
                 if effect:
+                    if effect == EFFECT_OFF:
+                        # Turn off the effect. Ideally this should keep the
+                        # previous mode, but since the mode is shared with
+                        # effect, use the default, or first in the list
+                        effect = (
+                            self._color_mode_dps.default
+                            or self._color_mode_dps.values(self._device)[0]
+                        )
                     _LOGGER.debug(
                         "Emulating effect using color mode of %s",
                         effect,
@@ -346,11 +431,15 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
 
         if (
             ATTR_BRIGHTNESS in params
-            and self.raw_color_mode != ColorMode.HS
+            and not self._brightness_control_by_hsv
             and self._brightness_dps
         ):
             bright = params.get(ATTR_BRIGHTNESS)
             _LOGGER.debug("Setting brightness to %s", bright)
+            r = self._brightness_dps.range(self._device)
+            if r:
+                bright = color_util.brightness_to_value(r, bright)
+
             settings = {
                 **settings,
                 **self._brightness_dps.get_values_to_set(
@@ -388,8 +477,13 @@ class TuyaLocalLight(TuyaLocalEntity, LightEntity):
                     self._device, True
                 )
         elif self._brightness_dps and not self.is_on:
+            bright = 255
+            r = self._brightness_dps.range(self._device)
+            if r:
+                bright = color_util.brightness_to_value(r, bright)
+
             settings = settings | self._brightness_dps.get_values_to_set(
-                self._device, 255
+                self._device, bright
             )
 
         if settings:

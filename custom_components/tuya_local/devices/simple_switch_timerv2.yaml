@@ -4,6 +4,12 @@ products:
     name: Nexxt 220v smartplug
   - id: 45gg9a0jfyzj1z1d
     name: Mini smart switch
+  - id: qlrnevw57ezct7ta
+    name: On Wall WiFi Switch
+  - id: flcvzjtnkhsreazp
+    name: GIRIER USB adaptor
+  - id: lbqau5negh2zizit
+    name: Kruidvat outdoor smartplug
 primary_entity:
   entity: switch
   dps:
@@ -13,8 +19,7 @@ primary_entity:
 secondary_entities:
   - entity: number
     category: config
-    name: Timer
-    icon: "mdi:timer"
+    translation_key: timer
     dps:
       - id: 9
         name: value
@@ -27,8 +32,7 @@ secondary_entities:
           - scale: 60
             step: 60
   - entity: select
-    name: Power on state
-    icon: "mdi:toggle-switch"
+    translation_key: initial_state
     category: config
     dps:
       - id: 38
@@ -37,10 +41,15 @@ secondary_entities:
         optional: true
         mapping:
           - dps_val: "on"
-            value: "On"
+            value: "on"
           - dps_val: "off"
-            value: "Off"
+            value: "off"
           - dps_val: memory
-            value: Last state
+            value: memory
+      - id: 38
+        type: string
+        name: available
+        mapping:
           - dps_val: null
-            invalid: true
+            value: false
+          - value: true

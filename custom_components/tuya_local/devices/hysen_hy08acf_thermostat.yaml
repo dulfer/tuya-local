@@ -3,7 +3,7 @@ products:
   - id: xhx9h0duu9b9bobs
 primary_entity:
   entity: climate
-  translation_key: thermostat
+  translation_only_key: thermostat
   dps:
     - id: 1
       type: boolean
@@ -66,9 +66,6 @@ primary_entity:
           conditions:
             - dps_val: ventilate
               invalid: true
-    - id: 13
-      type: bitfield
-      name: fault_code
     - id: 103
       type: integer
       name: max_temperature
@@ -83,32 +80,26 @@ primary_entity:
       name: hvac_action
       type: string
       mapping:
-        - constraint: hvac_mode
-          conditions:
-            - dps_val: false
-              value: "off"
-            - dps_val: true
-              mapping:
-                - dps_val: "0"
-                  value: idle
-                - dps_val: "1"
-                  value: heating
-                - dps_val: "2"
-                  value: cooling
-                # another variant uses long names
-                - dps_val: heatvalve
-                  value: heating
-                - dps_val: coolvalve
-                  value: cooling
-                - value: idle
+        - dps_val: "0"
+          value: idle
+        - dps_val: "1"
+          value: heating
+        - dps_val: "2"
+          value: cooling
+        # another variant uses long names
+        - dps_val: heatvalve
+          value: heating
+        - dps_val: coolvalve
+          value: cooling
+        - dps_val: closed
+          value: idle
     - id: 121
       name: program
       type: integer
       optional: true
 secondary_entities:
   - entity: lock
-    name: Child lock
-    icon: "mdi:hand-back-right-off"
+    translation_key: child_lock
     category: config
     dps:
       - id: 7
@@ -118,7 +109,6 @@ secondary_entities:
         type: string
         name: lock_type
   - entity: binary_sensor
-    name: Fault
     class: problem
     category: diagnostic
     dps:
@@ -129,10 +119,12 @@ secondary_entities:
           - dps_val: 0
             value: false
           - value: true
+      - id: 13
+        type: bitfield
+        name: fault_code
   - entity: switch
-    name: Sleep
+    translation_key: sleep
     category: config
-    icon: "mdi:power-sleep"
     dps:
       - id: 117
         type: boolean
@@ -166,7 +158,7 @@ secondary_entities:
     name: Maximum temperature
     category: config
     class: temperature
-    icon: "mdi:temperature-chevron-up"
+    icon: "mdi:thermometer-chevron-up"
     dps:
       - id: 103
         type: integer
@@ -179,7 +171,7 @@ secondary_entities:
     name: Minimum temperature
     category: config
     class: temperature
-    icon: "mdi:temperature-chevron-down"
+    icon: "mdi:thermometer-chevron-down"
     dps:
       - id: 104
         type: integer

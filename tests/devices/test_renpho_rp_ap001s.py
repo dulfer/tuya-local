@@ -1,5 +1,6 @@
 from homeassistant.components.fan import FanEntityFeature
 from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.switch import SwitchDeviceClass
 
 from ..const import RENPHO_PURIFIER_PAYLOAD
 from ..helpers import assert_device_properties_set
@@ -38,13 +39,18 @@ class TestRenphoPurifier(
         self.setUpSwitchable(SWITCH_DPS, self.subject)
         self.setUpBasicLight(LIGHT_DPS, self.entities.get("light_aq_indicator"))
         self.setUpBasicLock(LOCK_DPS, self.entities.get("lock_child_lock"))
-        self.setUpBasicSwitch(SLEEP_DPS, self.entities.get("switch_sleep"))
+        self.setUpBasicSwitch(
+            SLEEP_DPS,
+            self.entities.get("switch_sleep"),
+            device_class=SwitchDeviceClass.SWITCH,
+        )
         self.setUpMultiSensors(
             [
                 {
                     "name": "sensor_air_quality",
                     "dps": QUALITY_DPS,
-                    "device_class": SensorDeviceClass.AQI,
+                    "device_class": SensorDeviceClass.ENUM,
+                    "options": ["Bad", "Fair", "Good"],
                 },
                 {
                     "name": "sensor_prefilter_life",
@@ -77,7 +83,12 @@ class TestRenphoPurifier(
         )
 
     def test_supported_features(self):
-        self.assertEqual(self.subject.supported_features, FanEntityFeature.PRESET_MODE)
+        self.assertEqual(
+            self.subject.supported_features,
+            FanEntityFeature.PRESET_MODE
+            | FanEntityFeature.TURN_OFF
+            | FanEntityFeature.TURN_ON,
+        )
 
     def test_preset_modes(self):
         self.assertCountEqual(
@@ -142,6 +153,3 @@ class TestRenphoPurifier(
                 "hepa_filter_life": 105,
             },
         )
-
-    def test_icons(self):
-        self.assertEqual(self.basicSwitch.icon, "mdi:power-sleep")

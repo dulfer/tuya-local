@@ -10,20 +10,24 @@ from custom_components.tuya_local.button import TuyaLocalButton
 from custom_components.tuya_local.camera import TuyaLocalCamera
 from custom_components.tuya_local.climate import TuyaLocalClimate
 from custom_components.tuya_local.cover import TuyaLocalCover
+from custom_components.tuya_local.event import TuyaLocalEvent
 from custom_components.tuya_local.fan import TuyaLocalFan
 from custom_components.tuya_local.helpers.device_config import (
     TuyaDeviceConfig,
     possible_matches,
 )
 from custom_components.tuya_local.humidifier import TuyaLocalHumidifier
+from custom_components.tuya_local.lawn_mower import TuyaLocalLawnMower
 from custom_components.tuya_local.light import TuyaLocalLight
 from custom_components.tuya_local.lock import TuyaLocalLock
 from custom_components.tuya_local.number import TuyaLocalNumber
+from custom_components.tuya_local.remote import TuyaLocalRemote
 from custom_components.tuya_local.select import TuyaLocalSelect
 from custom_components.tuya_local.sensor import TuyaLocalSensor
 from custom_components.tuya_local.siren import TuyaLocalSiren
 from custom_components.tuya_local.switch import TuyaLocalSwitch
 from custom_components.tuya_local.vacuum import TuyaLocalVacuum
+from custom_components.tuya_local.valve import TuyaLocalValve
 from custom_components.tuya_local.water_heater import TuyaLocalWaterHeater
 
 DEVICE_TYPES = {
@@ -33,16 +37,20 @@ DEVICE_TYPES = {
     "camera": TuyaLocalCamera,
     "climate": TuyaLocalClimate,
     "cover": TuyaLocalCover,
+    "event": TuyaLocalEvent,
     "fan": TuyaLocalFan,
     "humidifier": TuyaLocalHumidifier,
+    "lawn_mower": TuyaLocalLawnMower,
     "light": TuyaLocalLight,
     "lock": TuyaLocalLock,
     "number": TuyaLocalNumber,
+    "remote": TuyaLocalRemote,
     "switch": TuyaLocalSwitch,
     "select": TuyaLocalSelect,
     "sensor": TuyaLocalSensor,
     "siren": TuyaLocalSiren,
     "vacuum": TuyaLocalVacuum,
+    "valve": TuyaLocalValve,
     "water_heater": TuyaLocalWaterHeater,
 }
 
@@ -65,12 +73,8 @@ class TuyaDeviceTestCase(IsolatedAsyncioTestCase):
 
         self.entities = {}
         self.secondary_category = []
-        self.primary_entity = cfg.primary_entity.config_id
-        self.entities[self.primary_entity] = self.create_entity(cfg.primary_entity)
-
         self.names = {}
-        self.names[cfg.primary_entity.config_id] = cfg.primary_entity.name
-        for e in cfg.secondary_entities():
+        for e in cfg.all_entities():
             self.entities[e.config_id] = self.create_entity(e)
             self.names[e.config_id] = e.name
 

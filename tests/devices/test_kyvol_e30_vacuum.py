@@ -1,8 +1,7 @@
 from homeassistant.components.button import ButtonDeviceClass
-from homeassistant.components.sensor import SensorDeviceClass, STATE_CLASS_MEASUREMENT
+from homeassistant.components.sensor import STATE_CLASS_MEASUREMENT, SensorDeviceClass
 from homeassistant.components.vacuum import (
     STATE_CLEANING,
-    STATE_DOCKED,
     STATE_ERROR,
     STATE_IDLE,
     STATE_PAUSED,
@@ -61,7 +60,6 @@ class TestKyvolE30Vacuum(MultiButtonTests, MultiSensorTests, TuyaDeviceTestCase)
                 {
                     "dps": RSTFILTER_DPS,
                     "name": "button_filter_reset",
-                    "device_class": ButtonDeviceClass.RESTART,
                 },
             ]
         )
@@ -110,6 +108,7 @@ class TestKyvolE30Vacuum(MultiButtonTests, MultiSensorTests, TuyaDeviceTestCase)
 
         self.mark_secondary(
             [
+                "binary_sensor_problem",
                 "button_edge_brush_reset",
                 "button_roll_brush_reset",
                 "button_filter_reset",

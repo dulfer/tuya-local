@@ -23,13 +23,6 @@ primary_entity:
       type: base64
       optional: true
       force: true
-    - id: 9
-      name: fault
-      type: bitfield
-      optional: true
-      mapping:
-        - dps_val: 0
-          value: OK
     - id: 19
       name: breaker_number
       type: string
@@ -48,6 +41,15 @@ secondary_entities:
     category: config
     dps:
       - id: 12
+        type: boolean
+        name: button
+        optional: true
+  - entity: button
+    name: Refresh sensors
+    class: restart
+    category: config
+    dps:
+      - id: 106
         type: boolean
         name: button
         optional: true
@@ -147,3 +149,21 @@ secondary_entities:
         mapping:
           - mask: "0000000000FFFFFF"
             scale: 1000
+  - entity: binary_sensor
+    class: problem
+    category: diagnostic
+    dps:
+      - id: 9
+        type: bitfield
+        name: sensor
+        optional: true
+        mapping:
+          - dps_val: 0
+            value: false
+          - dps_val: null
+            value: false
+          - value: true
+      - id: 9
+        type: bitfield
+        name: fault_code
+        optional: true
